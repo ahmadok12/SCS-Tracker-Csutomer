@@ -264,6 +264,11 @@ const STAGES = [
   {name:'Customs',        pct:93},
   {name:'Delivered',      pct:100},
 ];
+function stagesForCategory(category){
+  if(category!=='Shipping') return STAGES;
+  const excluded = new Set(['Production','Received in China Warehouse','Quality Check']);
+  return STAGES.filter(stage=>!excluded.has(stage.name));
+}
 // ===== Supabase config — fill these in from Settings → API in your Supabase project =====
 const SUPABASE_URL = 'https://eourkizstbgmrqkdwnjd.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_rEKWzv2DaUZHhHwBdCJKXg_9jEQkz6k';
@@ -376,9 +381,10 @@ function shipSVG(){
 }
 
 function orderCard(o){
-  const idx = STAGES.findIndex(s=>s.name===o.stage);
+  const routeStages = stagesForCategory(o.category || 'Sourcing');
+  const idx = routeStages.findIndex(s=>s.name===o.stage);
   const done = o.pct>=100;
-  const stops = STAGES.map((s,i)=>`
+  const stops = routeStages.map((s,i)=>`
     <div class="stop ${i<idx?'past':''} ${i===idx?'now':''}"><span>${s.name}</span></div>`).join('');
   const updates = (o.updates||[]).slice().reverse().map(u=>`
     <div class="update"><time>${fmtDate(u.t)}</time><div>${esc(u.msg)}</div></div>`).join('')
