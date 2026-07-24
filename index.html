@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shaikh China Sourcing — Order Tracker</title>
+<title>Shaikh China Sourcing — Customer Order Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -222,40 +222,13 @@ td .stagechip{
 <header class="topbar">
   <div class="brand">
     <div class="display">SHAIKH<b>SOURCING</b></div>
-    <small>Order Tracker</small>
+    <small>Customer Order Tracker</small>
   </div>
-  <nav class="nav">
-    <button id="nav-home" onclick="go('home')" class="active">Home</button>
-    <button id="nav-track" onclick="go('track')">My orders</button>
-    <button id="nav-admin" onclick="go('admin')">Admin</button>
-  </nav>
 </header>
 
 <main>
-
-  <!-- HOME -->
-  <section id="view-home" class="view on">
-    <div class="hero">
-      <div class="eyebrow">Yiwu &amp; Guangzhou → Pakistan, the Gulf &amp; beyond</div>
-      <h1>Follow your order,<br><span>every step of the way</span></h1>
-      <p>From first quote to final delivery — live progress on your sourcing order, updated by our team at every stage.</p>
-    </div>
-    <div class="home-cards">
-      <button class="home-card" onclick="go('track')">
-        <h2>I'm a customer</h2>
-        <p>Enter the tracking number we shared with you to see your order's current stage, progress, and estimated delivery.</p>
-        <span class="tag">Track my order →</span>
-      </button>
-      <button class="home-card" id="hc-admin" onclick="go('admin')">
-        <h2>I'm the team</h2>
-        <p>Manage all customer orders in one place — update stages, progress, ETAs, and post updates customers can see.</p>
-        <span class="tag">Open admin →</span>
-      </button>
-    </div>
-  </section>
-
   <!-- TRACK / CUSTOMER PORTAL -->
-  <section id="view-track" class="view">
+  <section id="view-track" class="view on">
     <div id="cust-login" class="login-box">
       <h2>Customer login</h2>
       <p>Use the email &amp; password we sent you to view your orders.</p>
@@ -274,112 +247,7 @@ td .stagechip{
     </div>
   </section>
 
-  <!-- ADMIN -->
-  <section id="view-admin" class="view">
-    <div id="admin-login" class="login-box">
-      <h2>Admin access</h2>
-      <p>Sign in with your admin email and password.</p>
-      <input id="admin-email" type="email" placeholder="you@shaikhchinasourcing.com" style="letter-spacing:normal; text-align:left; font-size:15px">
-      <input id="admin-pass" type="password" placeholder="Password" style="letter-spacing:normal; text-align:left; font-size:15px"
-             onkeydown="if(event.key==='Enter')doLogin()">
-      <button class="btn" style="width:100%" onclick="doLogin()">Sign in</button>
-    </div>
-
-    <div id="admin-panel" style="display:none">
-      <div class="admin-head">
-        <h1>All orders</h1>
-        <div style="display:flex; gap:10px">
-          <button class="btn ghost sm" onclick="doLogout()">Sign out</button>
-          <button class="btn ghost sm" onclick="openCustomerForm()">+ New customer</button>
-          <button class="btn gold" onclick="openForm()">+ New order</button>
-        </div>
-      </div>
-      <div class="stat-row" id="stats"></div>
-      <div class="table-wrap" style="margin-bottom:22px">
-        <table>
-          <thead><tr><th>Customer</th><th>City</th><th>Email (username)</th><th></th></tr></thead>
-          <tbody id="customer-rows"></tbody>
-        </table>
-        <div class="empty" id="cust-empty-msg" style="display:none">No customers yet. Click “+ New customer” to add one.</div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Customer</th><th>Product</th><th>Tracking #</th><th>Stage</th><th>Progress</th><th>ETA</th><th></th></tr>
-          </thead>
-          <tbody id="order-rows"></tbody>
-        </table>
-        <div class="empty" id="empty-msg" style="display:none">No orders yet. Click “+ New order” to add your first one.</div>
-      </div>
-    </div>
-  </section>
 </main>
-
-<!-- ORDER FORM MODAL -->
-<div class="modal-bg" id="modal-bg">
-  <div class="modal">
-    <h2 id="modal-title">New order</h2>
-    <div class="fgrid">
-      <div class="field full"><label>Customer</label>
-        <select id="f-customer-id"></select>
-      </div>
-      <div class="field full"><label>Product / order description</label><input id="f-product" placeholder="500 units LED desk lamps, custom logo"></div>
-      <div class="field"><label>Tracking number</label><input id="f-tn" placeholder="Auto-generated" readonly style="opacity:.7"></div>
-      <div class="field"><label>Current stage</label>
-        <select id="f-stage" onchange="stagePct()"></select>
-      </div>
-      <div class="field"><label>Completion %</label><input id="f-pct" type="number" min="0" max="100"></div>
-      <div class="field"><label>Estimated completion</label><input id="f-eta" type="date"></div>
-      <div class="field full"><label>Post an update (visible to customer)</label>
-        <textarea id="f-update" placeholder="e.g. Sample approved, mass production started at factory."></textarea>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="danger" id="btn-delete" style="display:none" onclick="deleteOrder()">Delete order</button>
-      <button class="btn ghost" onclick="closeForm()">Cancel</button>
-      <button class="btn" onclick="saveOrder()">Save order</button>
-    </div>
-  </div>
-</div>
-
-<!-- NEW CUSTOMER MODAL -->
-<div class="modal-bg" id="cust-modal-bg">
-  <div class="modal">
-    <h2>New customer</h2>
-    <p style="color:var(--ink-dim); font-size:14px; margin-bottom:16px">Creates a login for them and adds them to your customer list.</p>
-    <div class="fgrid">
-      <div class="field full"><label>Customer / company name</label><input id="nc-name" placeholder="Bilal Traders"></div>
-      <div class="field"><label>Email (their username)</label><input id="nc-email" type="email" placeholder="bilal@traders.com"></div>
-      <div class="field"><label>City</label><input id="nc-city" placeholder="Karachi"></div>
-    </div>
-    <div id="nc-result" style="display:none; margin-top:18px; background:var(--navy); border:1px solid var(--gold); border-radius:10px; padding:16px">
-      <div style="font-size:13px; color:var(--ink-dim); margin-bottom:8px">Share these with the customer (shown once):</div>
-      <div style="font-family:monospace; font-size:15px" id="nc-creds"></div>
-      <button class="btn gold sm" style="margin-top:10px" onclick="copyCreds()">Copy for WhatsApp</button>
-    </div>
-    <div class="modal-actions">
-      <button class="btn ghost" onclick="closeCustomerForm()">Close</button>
-      <button class="btn" id="nc-submit" onclick="createCustomer()">Create login</button>
-    </div>
-  </div>
-</div>
-
-<!-- RESET PASSWORD MODAL -->
-<div class="modal-bg" id="reset-modal-bg">
-  <div class="modal">
-    <h2 id="reset-title">Reset password</h2>
-    <p style="color:var(--ink-dim); font-size:14px; margin:6px 0 16px" id="reset-sub">This creates a new password and invalidates their old one.</p>
-    <div id="reset-result" style="display:none; background:var(--navy); border:1px solid var(--gold); border-radius:10px; padding:16px">
-      <div style="font-size:13px; color:var(--ink-dim); margin-bottom:8px">New login (shown once):</div>
-      <div style="font-family:monospace; font-size:15px" id="reset-creds"></div>
-      <button class="btn gold sm" style="margin-top:10px" onclick="copyResetCreds()">Copy for WhatsApp</button>
-    </div>
-    <div class="modal-actions">
-      <button class="btn ghost" onclick="closeResetModal()">Close</button>
-      <button class="btn" id="reset-submit" onclick="confirmReset()">Generate new password</button>
-    </div>
-  </div>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -449,43 +317,21 @@ async function loadCustomers(){
 }
 function customerName(id){ return customers.find(c=>c.id===id)?.name || 'Unknown customer'; }
 
-/* ================= nav ================= */
-function go(view){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
-  document.getElementById('view-'+view).classList.add('on');
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
-  document.getElementById('nav-'+view).classList.add('active');
-  if(view==='admin' && unlocked) renderAdmin();
-  if(view==='track' && custUnlocked) renderCustDashboard();
-  window.scrollTo({top:0});
-}
-
-/* ================= mode: customer link vs. team link =================
-   Customers get the plain URL and only ever see Home + My orders.
-   Your team uses this same file with ?admin appended to the URL
-   (e.g. shaikh-china-sourcing-order-tracker.html?admin) and only sees Admin. */
-function applyMode(){
-  const isAdmin = new URLSearchParams(location.search).has('admin');
-  if(isAdmin){
-    document.getElementById('nav-home').style.display='none';
-    document.getElementById('nav-track').style.display='none';
-    go('admin');
-  } else {
-    document.getElementById('nav-admin').style.display='none';
-    document.getElementById('hc-admin').style.display='none';
-    go('home');
-  }
-}
-
 /* ================= customer login + dashboard ================= */
 async function custLogin(){
   if(NEEDS_SETUP){ await enterCustDashboard(); return; }
+  document.getElementById('cust-err').textContent = 'Wrong email or password. Message us if you need it resent.';
   const email = document.getElementById('cust-email').value.trim();
   const password = document.getElementById('cust-pass').value;
   const {error} = await sb.auth.signInWithPassword({email, password});
   if(error){ document.getElementById('cust-err').style.display='block'; return; }
   document.getElementById('cust-err').style.display='none';
-  await enterCustDashboard();
+  const validCustomer = await enterCustDashboard();
+  if(!validCustomer){
+    await sb.auth.signOut();
+    document.getElementById('cust-err').textContent = 'Access denied — this account is not a customer login.';
+    document.getElementById('cust-err').style.display='block';
+  }
 }
 async function custLogout(){
   if(!NEEDS_SETUP) await sb.auth.signOut();
@@ -494,22 +340,25 @@ async function custLogout(){
   document.getElementById('cust-dashboard').style.display='none';
 }
 async function enterCustDashboard(){
+  await loadCustomers(); // RLS returns just this customer's own row
+  await loadOrders();    // RLS returns just this customer's own orders
+  if(!NEEDS_SETUP && !customers.length) return false;
   custUnlocked = true;
   document.getElementById('cust-login').style.display='none';
   document.getElementById('cust-dashboard').style.display='block';
-  await loadCustomers(); // RLS returns just this customer's own row
-  await loadOrders();    // RLS returns just this customer's own orders
   renderCustDashboard();
+  return true;
 }
 function renderCustDashboard(){
   const me = customers[0];
   document.getElementById('cust-greeting').textContent = me ? `Welcome, ${me.name}` : 'My orders';
   const list = document.getElementById('cust-order-list');
   if(!orders.length){ list.innerHTML = `<p class="hint" style="text-align:left">No orders yet — nothing to show here so far.</p>`; return; }
-  list.innerHTML = orders.slice().sort((a,b)=> b.pct - a.pct === 0 ? 0 : (a.pct===100)-(b.pct===100)).map(o=>orderCard(o)).join('<div style="height:22px"></div>');
+  const visibleOrders = orders.slice().sort((a,b)=>(a.pct===100)-(b.pct===100) || b.pct-a.pct);
+  list.innerHTML = visibleOrders.map(o=>orderCard(o)).join('<div style="height:22px"></div>');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     list.querySelectorAll('.order-card').forEach((card,i)=>{
-      const o = orders[i];
+      const o = visibleOrders[i];
       const f = card.querySelector('.route-fill'), s = card.querySelector('.route-ship');
       if(f){ f.style.width = o.pct+'%'; s.style.left = o.pct+'%'; }
     });
@@ -561,245 +410,12 @@ function orderCard(o){
   </div>`;
 }
 
-/* ================= admin ================= */
-async function doLogin(){
-  if(NEEDS_SETUP){ await enterAdmin(); return; }
-  const email = document.getElementById('admin-email').value.trim();
-  const password = document.getElementById('admin-pass').value;
-  const {error} = await sb.auth.signInWithPassword({email, password});
-  if(error){ toast('Login failed — check email/password'); return; }
-  await enterAdmin();
-}
-async function doLogout(){
-  if(!NEEDS_SETUP) await sb.auth.signOut();
-  unlocked = false;
-  document.getElementById('admin-login').style.display='block';
-  document.getElementById('admin-panel').style.display='none';
-}
-async function enterAdmin(){
-  unlocked = true;
-  document.getElementById('admin-login').style.display='none';
-  document.getElementById('admin-panel').style.display='block';
-  await loadCustomers();
-  await loadOrders();
-  renderAdmin();
-}
 async function checkExistingSession(){
   if(NEEDS_SETUP) return;
   const {data:{session}} = await sb.auth.getSession();
   if(!session) return;
-  const {data: staffRow} = await sb.from('staff').select('user_id').eq('user_id', session.user.id).maybeSingle();
-  if(staffRow) await enterAdmin();
-  else await enterCustDashboard();
-}
-
-function renderAdmin(){
-  const tbody = document.getElementById('order-rows');
-  const active = orders.filter(o=>o.pct<100).length;
-  const shipping = orders.filter(o=>o.stage==='Shipping'||o.stage==='Customs').length;
-  const delivered = orders.filter(o=>o.pct>=100).length;
-  document.getElementById('stats').innerHTML = `
-    <div class="stat"><b>${orders.length}</b><span>Total orders</span></div>
-    <div class="stat"><b>${customers.length}</b><span>Customers</span></div>
-    <div class="stat"><b>${active}</b><span>In progress</span></div>
-    <div class="stat"><b>${shipping}</b><span>On the water</span></div>
-    <div class="stat"><b>${delivered}</b><span>Delivered</span></div>`;
-  document.getElementById('empty-msg').style.display = orders.length? 'none':'block';
-  tbody.innerHTML = orders.slice().sort((a,b)=>a.pct-b.pct).map(o=>{
-    const c = customers.find(c=>c.id===o.customer_id);
-    return `
-    <tr class="row">
-      <td><strong>${esc(c?.name||'Unknown')}</strong><br><span style="color:var(--ink-dim);font-size:12px">${esc(c?.city||'')}</span></td>
-      <td style="max-width:220px">${esc(o.product)}</td>
-      <td>${o.tn}</td>
-      <td><span class="stagechip">${o.stage}</span></td>
-      <td><div style="display:flex;align-items:center">
-        <div class="mini-bar"><div class="mini-fill" style="width:${o.pct}%"></div></div>
-        <span class="pct">${o.pct}%</span></div></td>
-      <td>${fmtDate(o.eta)||'—'}</td>
-      <td><button class="btn ghost sm" onclick="openForm('${o.id}')">Edit</button></td>
-    </tr>`;}).join('');
-
-  const custBody = document.getElementById('customer-rows');
-  document.getElementById('cust-empty-msg').style.display = customers.length? 'none':'block';
-  custBody.innerHTML = customers.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`
-    <tr class="row">
-      <td><strong>${esc(c.name)}</strong></td>
-      <td>${esc(c.city||'—')}</td>
-      <td style="font-size:13px; color:var(--ink-dim)">${esc(c.email)}</td>
-      <td><button class="btn ghost sm" onclick="openResetModal('${c.id}')">Reset password</button></td>
-    </tr>`).join('');
-}
-
-/* ---- reset password ---- */
-let resettingId = null;
-function openResetModal(customerId){
-  resettingId = customerId;
-  const c = customers.find(x=>x.id===customerId);
-  document.getElementById('reset-title').textContent = `Reset password — ${c?.name||''}`;
-  document.getElementById('reset-result').style.display='none';
-  document.getElementById('reset-submit').style.display='inline-block';
-  document.getElementById('reset-modal-bg').classList.add('on');
-}
-function closeResetModal(){
-  document.getElementById('reset-modal-bg').classList.remove('on');
-  resettingId = null;
-}
-async function confirmReset(){
-  const c = customers.find(x=>x.id===resettingId);
-  if(!c) return;
-
-  if(NEEDS_SETUP){
-    document.getElementById('reset-result').style.display='block';
-    document.getElementById('reset-creds').innerHTML = `Email: ${esc(c.email)}<br>Password: (demo mode — no real login to reset)`;
-    document.getElementById('reset-submit').style.display='none';
-    return;
-  }
-
-  const {data:{session}} = await sb.auth.getSession();
-  const {data, error} = await sb.functions.invoke('create-customer', {
-    body:{action:'reset', customer_id: resettingId},
-    headers:{ Authorization:`Bearer ${session.access_token}` }
-  });
-  if(error || data?.error){ toast('Reset failed: '+(data?.error||error.message)); return; }
-  document.getElementById('reset-result').style.display='block';
-  document.getElementById('reset-creds').innerHTML = `Email: ${esc(data.email)}<br>Password: ${esc(data.password)}`;
-  document.getElementById('reset-submit').style.display='none';
-}
-function copyResetCreds(){
-  const text = document.getElementById('reset-creds').innerText.replace('\n',' / ');
-  const msg = `Assalam o Alaikum! Your Shaikh China Sourcing order tracking password has been reset — ${text}. Sign in any time to see your order status.`;
-  navigator.clipboard?.writeText(msg).then(()=>toast('Login message copied — paste into WhatsApp'))
-    .catch(()=>toast('Copy manually: '+text));
-}
-
-/* ---- new customer ---- */
-function openCustomerForm(){
-  document.getElementById('nc-name').value='';
-  document.getElementById('nc-email').value='';
-  document.getElementById('nc-city').value='';
-  document.getElementById('nc-result').style.display='none';
-  document.getElementById('nc-submit').style.display='inline-block';
-  document.getElementById('cust-modal-bg').classList.add('on');
-}
-function closeCustomerForm(){
-  document.getElementById('cust-modal-bg').classList.remove('on');
-  loadCustomers().then(renderAdmin); // refresh table/dropdown with the new customer
-}
-async function createCustomer(){
-  const name = document.getElementById('nc-name').value.trim();
-  const email = document.getElementById('nc-email').value.trim();
-  const city = document.getElementById('nc-city').value.trim();
-  if(!name || !email){ toast('Name and email are required'); return; }
-
-  if(NEEDS_SETUP){
-    const id = crypto.randomUUID();
-    customers.push({id, name, email, city});
-    showCreds(email, '(demo mode — no real login created)');
-    return;
-  }
-
-  const {data:{session}} = await sb.auth.getSession();
-  const {data, error} = await sb.functions.invoke('create-customer', {
-    body:{name, email, city},
-    headers:{ Authorization:`Bearer ${session.access_token}` }
-  });
-  if(error || data?.error){ toast('Could not create login: '+(data?.error||error.message)); return; }
-  showCreds(data.email, data.password);
-}
-function showCreds(email, password){
-  document.getElementById('nc-result').style.display='block';
-  document.getElementById('nc-creds').innerHTML = `Email: ${esc(email)}<br>Password: ${esc(password)}`;
-  document.getElementById('nc-submit').style.display='none';
-}
-function copyCreds(){
-  const text = document.getElementById('nc-creds').innerText.replace('\n',' / ');
-  const msg = `Assalam o Alaikum! Here's your Shaikh China Sourcing order tracking login — ${text}. Sign in any time to see your order status.`;
-  navigator.clipboard?.writeText(msg).then(()=>toast('Login message copied — paste into WhatsApp'))
-    .catch(()=>toast('Copy manually: '+text));
-}
-
-/* ---- order form ---- */
-function openForm(id){
-  editingId = id||null;
-  const sel = document.getElementById('f-stage');
-  sel.innerHTML = STAGES.map(s=>`<option>${s.name}</option>`).join('');
-  const custSel = document.getElementById('f-customer-id');
-  if(!customers.length){
-    custSel.innerHTML = `<option value="">No customers yet — add one first</option>`;
-  } else {
-    custSel.innerHTML = customers.map(c=>`<option value="${c.id}">${esc(c.name)}${c.city?' — '+esc(c.city):''}</option>`).join('');
-  }
-  const o = id ? orders.find(x=>x.id===id) : null;
-  document.getElementById('modal-title').textContent = o? 'Edit order' : 'New order';
-  document.getElementById('btn-delete').style.display = o? 'inline':'none';
-  if(o) custSel.value = o.customer_id;
-  document.getElementById('f-product').value = o?.product||'';
-  document.getElementById('f-tn').value = o?.tn || genTN();
-  sel.value = o?.stage||'Inquiry';
-  document.getElementById('f-pct').value = o?.pct ?? 5;
-  document.getElementById('f-eta').value = o?.eta||'';
-  document.getElementById('f-update').value = '';
-  document.getElementById('modal-bg').classList.add('on');
-}
-function closeForm(){ document.getElementById('modal-bg').classList.remove('on'); }
-function stagePct(){
-  const s = STAGES.find(x=>x.name===document.getElementById('f-stage').value);
-  if(s) document.getElementById('f-pct').value = s.pct;
-}
-function genTN(){
-  const d = new Date();
-  const ym = String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0');
-  return `SCS-${ym}-${Math.floor(1000+Math.random()*9000)}`;
-}
-async function saveOrder(){
-  const customer_id = document.getElementById('f-customer-id').value;
-  const product = document.getElementById('f-product').value.trim();
-  if(!customer_id || !product){ toast('Pick a customer and enter a product first'); return; }
-  const pct = Math.max(0, Math.min(100, parseInt(document.getElementById('f-pct').value||0)));
-  const upd = document.getElementById('f-update').value.trim();
-  const existing = editingId ? orders.find(x=>x.id===editingId) : null;
-  const updates = existing ? [...existing.updates] : [];
-  if(upd) updates.push({t:new Date().toISOString().slice(0,10), msg:upd});
-
-  const record = {
-    customer_id,
-    tn: document.getElementById('f-tn').value,
-    product,
-    stage: document.getElementById('f-stage').value,
-    pct,
-    eta: document.getElementById('f-eta').value || null,
-    updates,
-  };
-
-  if(NEEDS_SETUP){
-    if(existing) Object.assign(existing, record);
-    else orders.push({id:crypto.randomUUID(), ...record});
-  } else if(editingId){
-    const {error} = await sb.from('orders').update(record).eq('id', editingId);
-    if(error){ toast('Save failed: '+error.message); return; }
-  } else {
-    const {error} = await sb.from('orders').insert(record);
-    if(error){ toast('Save failed: '+error.message); return; }
-  }
-
-  await loadOrders();
-  closeForm();
-  renderAdmin();
-  toast(editingId? 'Order updated':'Order created');
-}
-async function deleteOrder(){
-  if(!confirm('Delete this order? The customer will no longer see it in their dashboard.')) return;
-  if(NEEDS_SETUP){
-    orders = orders.filter(x=>x.id!==editingId);
-  } else {
-    const {error} = await sb.from('orders').delete().eq('id', editingId);
-    if(error){ toast('Delete failed: '+error.message); return; }
-  }
-  await loadOrders();
-  closeForm();
-  renderAdmin();
-  toast('Order deleted');
+  const validCustomer = await enterCustDashboard();
+  if(!validCustomer) await sb.auth.signOut();
 }
 
 /* ================= utils ================= */
@@ -817,8 +433,6 @@ function toast(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>t.classList.remove('on'), 2600);
 }
-
-window.addEventListener('DOMContentLoaded', applyMode);
 
 if(NEEDS_SETUP){
   seed();
