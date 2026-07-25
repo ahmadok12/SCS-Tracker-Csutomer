@@ -130,9 +130,9 @@ main{max-width:1080px; margin:0 auto; padding:36px 24px 80px; position:relative}
   transition:width 1s ease, height 1s ease;
 }
 .route-ship{
-  position:absolute; top:-15px; left:var(--progress, 0%); transform:translateX(-50%);
+  position:absolute; top:-15px; left:var(--marker-desktop, 0%); transform:translateX(-50%);
   transition:left 1s ease, top 1s ease;
-  font-size:0; line-height:0;
+  font-size:0; line-height:0; z-index:3;
 }
 .route-ship svg{width:34px; height:34px; display:block; filter:drop-shadow(0 3px 6px rgba(10,10,10,.25))}
 .route-stops{display:flex; justify-content:space-between; margin-top:14px}
@@ -157,8 +157,8 @@ main{max-width:1080px; margin:0 auto; padding:36px 24px 80px; position:relative}
     background:linear-gradient(180deg, var(--ink), var(--red));
   }
   .route-ship{
-    left:50%; top:var(--progress, 0%);
-    transform:translate(-50%,-50%) rotate(90deg);
+    left:50%; top:var(--marker-mobile, 0%);
+    transform:translate(-50%,-50%);
   }
   .route-ship svg{width:30px; height:30px}
   .route-stops{
@@ -426,7 +426,11 @@ function renderCustDashboard(){
     list.querySelectorAll('.order-card').forEach((card,i)=>{
       const o = visibleOrders[i];
       const route = card.querySelector('.route');
-      if(route) route.style.setProperty('--progress', o.pct+'%');
+      if(route){
+        route.style.setProperty('--progress', o.pct+'%');
+        route.style.setProperty('--marker-desktop', route.dataset.markerDesktop+'%');
+        route.style.setProperty('--marker-mobile', route.dataset.markerMobile+'%');
+      }
     });
   }));
 }
@@ -443,6 +447,12 @@ function shipSVG(){
 function orderCard(o){
   const routeStages = stagesForCategory(o.category || 'Sourcing');
   const idx = routeStages.findIndex(s=>s.name===o.stage);
+  const markerDesktop = idx >= 0 && routeStages.length
+    ? ((idx + .5) / routeStages.length) * 100
+    : o.pct;
+  const markerMobile = idx >= 0 && routeStages.length > 1
+    ? (idx / (routeStages.length - 1)) * 100
+    : o.pct;
   const done = o.pct>=100;
   const stops = routeStages.map((s,i)=>`
     <div class="stop ${i<idx?'past':''} ${i===idx?'now':''}"><span>${s.name}</span></div>`).join('');
@@ -458,7 +468,7 @@ function orderCard(o){
       </div>
       <span class="status-pill ${done?'done':''}">${done?'✓ Delivered':'Current stage: '+o.stage}</span>
     </div>
-    <div class="route" style="--progress:0%">
+    <div class="route" data-marker-desktop="${markerDesktop}" data-marker-mobile="${markerMobile}" style="--progress:0%;--marker-desktop:0%;--marker-mobile:0%">
       <div class="route-line">
         <div class="route-fill"></div>
         <div class="route-ship">${shipSVG()}</div>
