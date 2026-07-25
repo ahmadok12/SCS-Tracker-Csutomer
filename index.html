@@ -150,6 +150,16 @@ main{max-width:1080px; margin:0 auto; padding:36px 24px 80px; position:relative}
 .meta label{display:block; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:750; margin-bottom:4px}
 .meta div{font-size:16px; font-weight:700}
 .meta .big{font-size:28px; color:var(--red); letter-spacing:-.03em}
+.product-link-card{
+  margin-top:18px; padding:15px 16px; background:#fff7ed; border:1px solid #fed7aa;
+  border-radius:14px;
+}
+.product-link-card label{
+  display:block; color:var(--muted); font-size:11px; font-weight:750;
+  letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px;
+}
+.product-link-card a{color:var(--red-dark); font-weight:750; text-decoration:none; overflow-wrap:anywhere}
+.product-link-card a:hover{text-decoration:underline}
 
 .updates{margin-top:26px}
 .updates h3{font-size:17px; color:var(--ink); margin-bottom:12px; letter-spacing:-.02em}
@@ -423,6 +433,11 @@ function orderCard(o){
       <div class="meta"><label>Current stage</label><div>${o.stage}</div></div>
       <div class="meta"><label>Estimated ${done?'delivered':'completion'}</label><div>${fmtDate(o.eta)||'—'}</div></div>
     </div>
+    ${o.show_asset_to_customer && externalUrl(o.asset_url) ? `
+      <div class="product-link-card">
+        <label>Product pictures and videos</label>
+        <a href="${esc(externalUrl(o.asset_url))}" target="_blank" rel="noopener noreferrer">Open product files ↗</a>
+      </div>` : ''}
     <div class="updates">
       <h3>Updates from our team</h3>
       ${updates}
@@ -445,6 +460,15 @@ function fmtDate(d){
   const dt = new Date(d+'T00:00:00');
   if(isNaN(dt)) return d;
   return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+}
+function externalUrl(value){
+  if(!value) return '';
+  try {
+    const url = new URL(String(value).trim());
+    return ['http:','https:'].includes(url.protocol) ? url.href : '';
+  } catch {
+    return '';
+  }
 }
 let toastTimer;
 function toast(msg){
