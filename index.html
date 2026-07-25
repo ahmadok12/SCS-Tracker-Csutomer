@@ -126,10 +126,12 @@ main{max-width:1080px; margin:0 auto; padding:36px 24px 80px; position:relative}
 .route-line{position:relative; height:4px; background:#eef0f2; border-radius:99px}
 .route-fill{
   position:absolute; left:0; top:0; height:100%; border-radius:99px;
-  background:linear-gradient(90deg, var(--ink), var(--red)); transition:width 1s ease;
+  width:var(--progress, 0%); background:linear-gradient(90deg, var(--ink), var(--red));
+  transition:width 1s ease, height 1s ease;
 }
 .route-ship{
-  position:absolute; top:-15px; transform:translateX(-50%); transition:left 1s ease;
+  position:absolute; top:-15px; left:var(--progress, 0%); transform:translateX(-50%);
+  transition:left 1s ease, top 1s ease;
   font-size:0; line-height:0;
 }
 .route-ship svg{width:34px; height:34px; display:block; filter:drop-shadow(0 3px 6px rgba(10,10,10,.25))}
@@ -143,7 +145,39 @@ main{max-width:1080px; margin:0 auto; padding:36px 24px 80px; position:relative}
 .stop.now::before{background:var(--red); border-color:var(--red); box-shadow:0 0 0 5px #e31b2326}
 .stop span{font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#9aa0aa; font-weight:700}
 .stop.past span,.stop.now span{color:var(--ink)}
-@media(max-width:640px){ .stop span{font-size:9px} }
+@media(max-width:640px){
+  .order-card{padding:21px 18px}
+  .route{margin:28px 0 12px; padding:4px 0 4px 34px}
+  .route-line{
+    position:absolute; left:5px; top:17px; bottom:17px;
+    width:4px; height:auto;
+  }
+  .route-fill{
+    width:100%; height:var(--progress, 0%);
+    background:linear-gradient(180deg, var(--ink), var(--red));
+  }
+  .route-ship{
+    left:50%; top:var(--progress, 0%);
+    transform:translate(-50%,-50%) rotate(90deg);
+  }
+  .route-ship svg{width:30px; height:30px}
+  .route-stops{
+    flex-direction:column; justify-content:flex-start;
+    gap:13px; margin-top:0;
+  }
+  .stop{
+    flex:none; min-height:34px; display:flex;
+    align-items:center; text-align:left;
+  }
+  .stop::before{
+    position:absolute; left:-34px; top:50%;
+    margin:0; transform:translateY(-50%);
+  }
+  .stop span{
+    font-size:12px; line-height:1.3; letter-spacing:.02em;
+    text-transform:none;
+  }
+}
 
 .meta-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-top:26px}
 .meta{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px}
@@ -225,6 +259,9 @@ td .stagechip{
 .login-box{max-width:380px; margin:60px auto; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:32px; text-align:center; box-shadow:0 2px 10px #0a0a0a08}
 .login-box h2{font-size:26px; margin-bottom:6px; letter-spacing:-.03em}
 .login-box p{color:var(--muted); font-size:14px; margin-bottom:18px; font-weight:500}
+.login-box .err{
+  color:var(--red); font-weight:700; margin:12px 0 0;
+}
 .login-box input{
   width:100%; background:#fff; border:1px solid var(--line); border-radius:10px;
   padding:13px; color:var(--ink); font-size:16px; text-align:center; letter-spacing:.15em; margin-bottom:14px;
@@ -259,7 +296,7 @@ td .stagechip{
       <input id="cust-pass" type="password" placeholder="Password" style="letter-spacing:normal; text-align:left; font-size:15px"
              onkeydown="if(event.key==='Enter')custLogin()">
       <button class="btn" style="width:100%" onclick="custLogin()">Sign in</button>
-      <p class="err" id="cust-err" style="margin-top:12px">Wrong email or password. Message us if you need it resent.</p>
+      <p class="err" id="cust-err" role="alert" aria-live="polite">Wrong email or password. Message us if you need it resent.</p>
     </div>
     <div id="cust-dashboard" style="display:none">
       <div class="admin-head">
@@ -388,8 +425,8 @@ function renderCustDashboard(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     list.querySelectorAll('.order-card').forEach((card,i)=>{
       const o = visibleOrders[i];
-      const f = card.querySelector('.route-fill'), s = card.querySelector('.route-ship');
-      if(f){ f.style.width = o.pct+'%'; s.style.left = o.pct+'%'; }
+      const route = card.querySelector('.route');
+      if(route) route.style.setProperty('--progress', o.pct+'%');
     });
   }));
 }
@@ -421,10 +458,10 @@ function orderCard(o){
       </div>
       <span class="status-pill ${done?'done':''}">${done?'✓ Delivered':'Current stage: '+o.stage}</span>
     </div>
-    <div class="route">
+    <div class="route" style="--progress:0%">
       <div class="route-line">
-        <div class="route-fill" style="width:0%"></div>
-        <div class="route-ship" style="left:0%">${shipSVG()}</div>
+        <div class="route-fill"></div>
+        <div class="route-ship">${shipSVG()}</div>
       </div>
       <div class="route-stops">${stops}</div>
     </div>
