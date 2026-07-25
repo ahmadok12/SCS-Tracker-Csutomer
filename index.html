@@ -113,6 +113,12 @@ main{max-width:1080px; margin:0 auto; padding:36px 24px 80px; position:relative}
   padding:28px; margin-top:28px; box-shadow:0 2px 10px #0a0a0a08;
 }
 .order-head{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap}
+.order-title-wrap{display:flex;align-items:center;gap:15px;min-width:0;flex:1}
+.customer-product-thumbnail{
+  width:88px;height:88px;flex:0 0 88px;border-radius:16px;overflow:hidden;
+  background:#f3f4f6;border:1px solid var(--line);box-shadow:0 4px 12px #0a0a0a12
+}
+.customer-product-thumbnail img{width:100%;height:100%;display:block;object-fit:cover}
 .order-head h2{font-size:26px; letter-spacing:-.03em}
 .order-head .tn{color:var(--muted); font-size:13px; letter-spacing:.03em; font-weight:600; margin-top:4px}
 .status-pill{
@@ -147,6 +153,9 @@ main{max-width:1080px; margin:0 auto; padding:36px 24px 80px; position:relative}
 .stop.past span,.stop.now span{color:var(--ink)}
 @media(max-width:640px){
   .order-card{padding:21px 18px}
+  .order-title-wrap{align-items:flex-start;gap:12px}
+  .customer-product-thumbnail{width:70px;height:70px;flex-basis:70px;border-radius:13px}
+  .order-head h2{font-size:21px}
   .route{margin:28px 0 12px; padding:4px 0 4px 34px}
   .route-line{
     position:absolute; left:5px; top:17px; bottom:17px;
@@ -446,6 +455,7 @@ function shipSVG(){
 
 function orderCard(o){
   const routeStages = stagesForCategory(o.category || 'Sourcing');
+  const thumbnail = productThumbnailUrl(o.thumbnail_url);
   const idx = routeStages.findIndex(s=>s.name===o.stage);
   const markerDesktop = idx >= 0 && routeStages.length
     ? ((idx + .5) / routeStages.length) * 100
@@ -462,11 +472,17 @@ function orderCard(o){
   return `
   <div class="order-card">
     <div class="order-head">
-      <div>
-        <h2>${esc(o.product)}</h2>
-        <div class="tn">${o.tn} &nbsp;·&nbsp; ${esc(customerName(o.customer_id))}</div>
+      <div class="order-title-wrap">
+        ${thumbnail?`
+          <div class="customer-product-thumbnail">
+            <img src="${esc(thumbnail)}" alt="${esc(o.product)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.remove()">
+          </div>`:''}
+        <div>
+          <h2>${esc(o.product)}</h2>
+          <div class="tn">${esc(o.tn)} &nbsp;·&nbsp; ${esc(customerName(o.customer_id))}</div>
+        </div>
       </div>
-      <span class="status-pill ${done?'done':''}">${done?'✓ Delivered':'Current stage: '+o.stage}</span>
+      <span class="status-pill ${done?'done':''}">${done?'✓ Delivered':'Current stage: '+esc(o.stage)}</span>
     </div>
     <div class="route" data-marker-desktop="${markerDesktop}" data-marker-mobile="${markerMobile}" style="--progress:0%;--marker-desktop:0%;--marker-mobile:0%">
       <div class="route-line">
@@ -513,6 +529,23 @@ function externalUrl(value){
   try {
     const url = new URL(String(value).trim());
     return ['http:','https:'].includes(url.protocol) ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+function productThumbnailUrl(value){
+  const validUrl = externalUrl(value);
+  if(!validUrl) return '';
+  try {
+    const url = new URL(validUrl);
+    if(url.hostname === 'drive.google.com'){
+      const pathMatch = url.pathname.match(/\/file\/d\/([^/]+)/);
+      const fileId = pathMatch?.[1] || url.searchParams.get('id');
+      if(fileId && /^[a-zA-Z0-9_-]+$/.test(fileId)){
+        return `https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w600`;
+      }
+    }
+    return validUrl;
   } catch {
     return '';
   }
