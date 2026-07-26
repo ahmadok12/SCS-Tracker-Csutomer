@@ -215,6 +215,44 @@ main{max-width:1080px; margin:0 auto; padding:36px 24px 80px; position:relative}
 /* ---------- admin ---------- */
 .admin-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:22px}
 .admin-head h1{font-size:32px; letter-spacing:-.04em}
+.customer-orders-head{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:14px;
+  flex-wrap:wrap;margin:8px 0 14px
+}
+.customer-orders-head h2{font-size:24px;letter-spacing:-.03em}
+.customer-order-note{color:var(--muted);font-size:13px;margin-top:3px}
+.order-tools{
+  display:grid;grid-template-columns:minmax(240px,1.45fr) repeat(4,minmax(135px,.8fr));
+  gap:10px;margin:0 0 18px;padding:14px;background:#fff;border:1px solid var(--line);
+  border-radius:16px;box-shadow:0 2px 10px #0a0a0a08
+}
+.order-tool{position:relative;min-width:0}
+.order-tool label{
+  display:block;color:var(--muted);font-size:9.5px;font-weight:800;letter-spacing:.065em;
+  text-transform:uppercase;margin:0 0 5px 3px
+}
+.order-tool input,.order-tool select{
+  width:100%;height:42px;background:#fff;border:1px solid var(--line);border-radius:10px;
+  color:var(--ink);font:inherit;font-size:13px;font-weight:650;padding:0 12px;outline:none
+}
+.order-tool input{padding-left:39px}
+.order-tool input:focus,.order-tool select:focus{border-color:var(--red);box-shadow:0 0 0 3px #e31b2318}
+.order-search-icon{
+  position:absolute;left:13px;bottom:12px;width:17px;height:17px;color:var(--muted);pointer-events:none
+}
+.customer-order-empty{
+  display:none;background:#fff;border:1px solid var(--line);border-radius:16px;
+  padding:34px 20px;text-align:center;color:var(--muted);font-size:14px
+}
+@media(max-width:980px){.order-tools{grid-template-columns:repeat(3,minmax(150px,1fr))}}
+@media(max-width:700px){
+  .order-tools{grid-template-columns:1fr 1fr;padding:12px}
+  .order-tool.search-tool{grid-column:1/-1}
+}
+@media(max-width:520px){
+  .order-tools{grid-template-columns:1fr}
+  .order-tool.search-tool{grid-column:auto}
+}
 .stat-row{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:26px}
 .stat{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:0 2px 10px #0a0a0a08}
 .stat b{font-size:30px; display:block; color:var(--red); letter-spacing:-.03em}
@@ -312,6 +350,54 @@ td .stagechip{
         <h1 id="cust-greeting">My orders</h1>
         <button class="btn ghost sm" onclick="custLogout()">Sign out</button>
       </div>
+      <div class="customer-orders-head">
+        <div>
+          <h2>Order tracking</h2>
+          <p class="customer-order-note" id="cust-order-note">Showing all your orders.</p>
+        </div>
+        <button class="btn ghost sm" id="cust-order-reset" type="button" onclick="resetCustOrderControls()" style="display:none">Reset</button>
+      </div>
+      <div class="order-tools" aria-label="Search, filter and sort orders">
+        <div class="order-tool search-tool">
+          <label for="cust-order-search">Search orders</label>
+          <svg class="order-search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <input id="cust-order-search" type="search" placeholder="Product or tracking #" oninput="updateCustOrderControls()">
+        </div>
+        <div class="order-tool">
+          <label for="cust-order-stage-filter">Stage</label>
+          <select id="cust-order-stage-filter" onchange="updateCustOrderControls()">
+            <option value="">All stages</option>
+          </select>
+        </div>
+        <div class="order-tool">
+          <label for="cust-order-category-filter">Category</label>
+          <select id="cust-order-category-filter" onchange="updateCustOrderControls()">
+            <option value="">All categories</option>
+          </select>
+        </div>
+        <div class="order-tool">
+          <label for="cust-order-state-filter">Order status</label>
+          <select id="cust-order-state-filter" onchange="updateCustOrderControls()">
+            <option value="">Any status</option>
+            <option value="active">In progress</option>
+            <option value="delivered">Delivered</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+        <div class="order-tool">
+          <label for="cust-order-sort">Sort by</label>
+          <select id="cust-order-sort" onchange="updateCustOrderControls()">
+            <option value="newest">Recently added</option>
+            <option value="oldest">Oldest added</option>
+            <option value="eta_soon">ETA: soonest</option>
+            <option value="eta_latest">ETA: latest</option>
+            <option value="progress_desc">Progress: high to low</option>
+            <option value="progress_asc">Progress: low to high</option>
+            <option value="product_az">Product: A–Z</option>
+          </select>
+        </div>
+      </div>
+      <div class="customer-order-empty" id="cust-order-empty"></div>
       <div id="cust-order-list"></div>
     </div>
   </section>
@@ -333,6 +419,7 @@ const STAGES = [
   {name:'Customs',        pct:93},
   {name:'Delivered',      pct:100},
 ];
+const ORDER_CATEGORIES = ['Sourcing','Shipping','Trading'];
 function stagesForCategory(category){
   if(category!=='Shipping') return STAGES;
   const excluded = new Set(['Production','Received in China Warehouse','Quality Check']);
@@ -349,6 +436,9 @@ let customers = [];       // admin: every customer. customer login: just their o
 let editingId = null;
 let unlocked = false;     // admin session
 let custUnlocked = false; // customer session
+let custOrderSearch = '';
+let custOrderFilter = {stage:'', category:'', state:''};
+let custOrderSort = 'newest';
 
 // demo data shown only if Supabase isn't configured yet, so the prototype still works
 const seed = () => {
@@ -419,17 +509,117 @@ async function enterCustDashboard(){
   await loadOrders();    // RLS returns just this customer's own orders
   if(!NEEDS_SETUP && !customers.length) return false;
   custUnlocked = true;
+  custOrderSearch = '';
+  custOrderFilter = {stage:'', category:'', state:''};
+  custOrderSort = 'newest';
   document.getElementById('cust-login').style.display='none';
   document.getElementById('cust-dashboard').style.display='block';
   renderCustDashboard();
   return true;
 }
+function syncCustOrderControls(){
+  const stageSelect = document.getElementById('cust-order-stage-filter');
+  const categorySelect = document.getElementById('cust-order-category-filter');
+  if(!stageSelect || !categorySelect) return;
+  stageSelect.innerHTML = `<option value="">All stages</option>` +
+    STAGES.map(stage=>`<option value="${esc(stage.name)}">${esc(stage.name)}</option>`).join('');
+  categorySelect.innerHTML = `<option value="">All categories</option>` +
+    ORDER_CATEGORIES.map(category=>`<option value="${esc(category)}">${esc(category)}</option>`).join('');
+  document.getElementById('cust-order-search').value = custOrderSearch;
+  stageSelect.value = custOrderFilter.stage;
+  categorySelect.value = custOrderFilter.category;
+  document.getElementById('cust-order-state-filter').value = custOrderFilter.state;
+  document.getElementById('cust-order-sort').value = custOrderSort;
+}
+function updateCustOrderControls(){
+  custOrderSearch = document.getElementById('cust-order-search').value.trim();
+  custOrderFilter = {
+    stage:document.getElementById('cust-order-stage-filter').value,
+    category:document.getElementById('cust-order-category-filter').value,
+    state:document.getElementById('cust-order-state-filter').value
+  };
+  custOrderSort = document.getElementById('cust-order-sort').value || 'newest';
+  renderCustDashboard();
+}
+function resetCustOrderControls(){
+  custOrderSearch = '';
+  custOrderFilter = {stage:'', category:'', state:''};
+  custOrderSort = 'newest';
+  renderCustDashboard();
+}
+function customerOrderCategory(order){
+  return ORDER_CATEGORIES.includes(order?.category) ? order.category : 'Sourcing';
+}
+function customerOrderSearchText(order){
+  return [
+    order.tn, order.product, order.stage, customerOrderCategory(order),
+    ...(Array.isArray(order.updates) ? order.updates.map(update=>update?.msg) : [])
+  ].filter(Boolean).join(' ').toLocaleLowerCase();
+}
+function customerOrderTimestamp(order){
+  const timestamp = Date.parse(order.created_at || '');
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+function sortCustomerOrders(list){
+  const originalIndex = new Map(orders.map((order,index)=>[order.id,index]));
+  return list.slice().sort((a,b)=>{
+    const fallbackNewest = (originalIndex.get(b.id) ?? 0) - (originalIndex.get(a.id) ?? 0);
+    if(custOrderSort==='oldest'){
+      const difference = customerOrderTimestamp(a)-customerOrderTimestamp(b);
+      return difference || -fallbackNewest;
+    }
+    if(custOrderSort==='eta_soon'){
+      const aEta = Date.parse(a.eta || '') || Number.MAX_SAFE_INTEGER;
+      const bEta = Date.parse(b.eta || '') || Number.MAX_SAFE_INTEGER;
+      return aEta-bEta || fallbackNewest;
+    }
+    if(custOrderSort==='eta_latest'){
+      const aEta = Date.parse(a.eta || '') || 0;
+      const bEta = Date.parse(b.eta || '') || 0;
+      return bEta-aEta || fallbackNewest;
+    }
+    if(custOrderSort==='progress_desc') return (Number(b.pct)||0)-(Number(a.pct)||0) || fallbackNewest;
+    if(custOrderSort==='progress_asc') return (Number(a.pct)||0)-(Number(b.pct)||0) || fallbackNewest;
+    if(custOrderSort==='product_az') return String(a.product||'').localeCompare(String(b.product||'')) || fallbackNewest;
+    return customerOrderTimestamp(b)-customerOrderTimestamp(a) || fallbackNewest;
+  });
+}
 function renderCustDashboard(){
   const me = customers[0];
   document.getElementById('cust-greeting').textContent = me ? `Welcome, ${me.name}` : 'My orders';
   const list = document.getElementById('cust-order-list');
-  if(!orders.length){ list.innerHTML = `<p class="hint" style="text-align:left">No orders yet — nothing to show here so far.</p>`; return; }
-  const visibleOrders = orders.slice().sort((a,b)=>(a.pct===100)-(b.pct===100) || b.pct-a.pct);
+  const empty = document.getElementById('cust-order-empty');
+  syncCustOrderControls();
+  const normalizedSearch = custOrderSearch.toLocaleLowerCase();
+  const visibleOrders = sortCustomerOrders(orders.filter(order=>
+    (!custOrderFilter.stage || order.stage===custOrderFilter.stage) &&
+    (!custOrderFilter.category || customerOrderCategory(order)===custOrderFilter.category) &&
+    (!custOrderFilter.state ||
+      (custOrderFilter.state==='active' && !order.is_closed && Number(order.pct)<100) ||
+      (custOrderFilter.state==='delivered' && Number(order.pct)>=100) ||
+      (custOrderFilter.state==='closed' && Boolean(order.is_closed))) &&
+    (!normalizedSearch || customerOrderSearchText(order).includes(normalizedSearch))
+  ));
+  const hasControls = Boolean(
+    normalizedSearch ||
+    custOrderFilter.stage ||
+    custOrderFilter.category ||
+    custOrderFilter.state ||
+    custOrderSort!=='newest'
+  );
+  document.getElementById('cust-order-reset').style.display = hasControls ? 'inline-block' : 'none';
+  document.getElementById('cust-order-note').textContent = hasControls
+    ? `${visibleOrders.length} of ${orders.length} order${orders.length===1?'':'s'} match your selection.`
+    : `Showing all ${orders.length} order${orders.length===1?'':'s'}, most recently added first.`;
+  if(!visibleOrders.length){
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    empty.textContent = orders.length
+      ? 'No orders match your search and filters. Try changing or resetting them.'
+      : 'No orders yet — nothing to show here so far.';
+    return;
+  }
+  empty.style.display = 'none';
   list.innerHTML = visibleOrders.map(o=>orderCard(o)).join('<div style="height:22px"></div>');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     list.querySelectorAll('.order-card').forEach((card,i)=>{
