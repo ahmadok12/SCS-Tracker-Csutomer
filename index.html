@@ -222,7 +222,7 @@ main{max-width:1080px; margin:0 auto; padding:36px 24px 80px; position:relative}
 .customer-orders-head h2{font-size:24px;letter-spacing:-.03em}
 .customer-order-note{color:var(--muted);font-size:13px;margin-top:3px}
 .order-tools{
-  display:grid;grid-template-columns:minmax(240px,1.45fr) repeat(4,minmax(135px,.8fr));
+  display:grid;grid-template-columns:minmax(240px,1.45fr) repeat(3,minmax(135px,.8fr));
   gap:10px;margin:0 0 18px;padding:14px;background:#fff;border:1px solid var(--line);
   border-radius:16px;box-shadow:0 2px 10px #0a0a0a08
 }
@@ -370,12 +370,6 @@ td .stagechip{
           </select>
         </div>
         <div class="order-tool">
-          <label for="cust-order-category-filter">Category</label>
-          <select id="cust-order-category-filter" onchange="updateCustOrderControls()">
-            <option value="">All categories</option>
-          </select>
-        </div>
-        <div class="order-tool">
           <label for="cust-order-state-filter">Order status</label>
           <select id="cust-order-state-filter" onchange="updateCustOrderControls()">
             <option value="">Any status</option>
@@ -419,7 +413,6 @@ const STAGES = [
   {name:'Customs',        pct:93},
   {name:'Delivered',      pct:100},
 ];
-const ORDER_CATEGORIES = ['Sourcing','Shipping','Trading'];
 function stagesForCategory(category){
   if(category!=='Shipping') return STAGES;
   const excluded = new Set(['Production','Received in China Warehouse','Quality Check']);
@@ -437,7 +430,7 @@ let editingId = null;
 let unlocked = false;     // admin session
 let custUnlocked = false; // customer session
 let custOrderSearch = '';
-let custOrderFilter = {stage:'', category:'', state:''};
+let custOrderFilter = {stage:'', state:'active'};
 let custOrderSort = 'newest';
 
 // demo data shown only if Supabase isn't configured yet, so the prototype still works
@@ -510,7 +503,7 @@ async function enterCustDashboard(){
   if(!NEEDS_SETUP && !customers.length) return false;
   custUnlocked = true;
   custOrderSearch = '';
-  custOrderFilter = {stage:'', category:'', state:''};
+  custOrderFilter = {stage:'', state:'active'};
   custOrderSort = 'newest';
   document.getElementById('cust-login').style.display='none';
   document.getElementById('cust-dashboard').style.display='block';
@@ -519,15 +512,11 @@ async function enterCustDashboard(){
 }
 function syncCustOrderControls(){
   const stageSelect = document.getElementById('cust-order-stage-filter');
-  const categorySelect = document.getElementById('cust-order-category-filter');
-  if(!stageSelect || !categorySelect) return;
+  if(!stageSelect) return;
   stageSelect.innerHTML = `<option value="">All stages</option>` +
     STAGES.map(stage=>`<option value="${esc(stage.name)}">${esc(stage.name)}</option>`).join('');
-  categorySelect.innerHTML = `<option value="">All categories</option>` +
-    ORDER_CATEGORIES.map(category=>`<option value="${esc(category)}">${esc(category)}</option>`).join('');
   document.getElementById('cust-order-search').value = custOrderSearch;
   stageSelect.value = custOrderFilter.stage;
-  categorySelect.value = custOrderFilter.category;
   document.getElementById('cust-order-state-filter').value = custOrderFilter.state;
   document.getElementById('cust-order-sort').value = custOrderSort;
 }
@@ -535,7 +524,6 @@ function updateCustOrderControls(){
   custOrderSearch = document.getElementById('cust-order-search').value.trim();
   custOrderFilter = {
     stage:document.getElementById('cust-order-stage-filter').value,
-    category:document.getElementById('cust-order-category-filter').value,
     state:document.getElementById('cust-order-state-filter').value
   };
   custOrderSort = document.getElementById('cust-order-sort').value || 'newest';
@@ -543,16 +531,13 @@ function updateCustOrderControls(){
 }
 function resetCustOrderControls(){
   custOrderSearch = '';
-  custOrderFilter = {stage:'', category:'', state:''};
+  custOrderFilter = {stage:'', state:'active'};
   custOrderSort = 'newest';
   renderCustDashboard();
 }
-function customerOrderCategory(order){
-  return ORDER_CATEGORIES.includes(order?.category) ? order.category : 'Sourcing';
-}
 function customerOrderSearchText(order){
   return [
-    order.tn, order.product, order.stage, customerOrderCategory(order),
+    order.tn, order.product, order.stage,
     ...(Array.isArray(order.updates) ? order.updates.map(update=>update?.msg) : [])
   ].filter(Boolean).join(' ').toLocaleLowerCase();
 }
@@ -593,7 +578,6 @@ function renderCustDashboard(){
   const normalizedSearch = custOrderSearch.toLocaleLowerCase();
   const visibleOrders = sortCustomerOrders(orders.filter(order=>
     (!custOrderFilter.stage || order.stage===custOrderFilter.stage) &&
-    (!custOrderFilter.category || customerOrderCategory(order)===custOrderFilter.category) &&
     (!custOrderFilter.state ||
       (custOrderFilter.state==='active' && !order.is_closed && Number(order.pct)<100) ||
       (custOrderFilter.state==='delivered' && Number(order.pct)>=100) ||
@@ -603,14 +587,13 @@ function renderCustDashboard(){
   const hasControls = Boolean(
     normalizedSearch ||
     custOrderFilter.stage ||
-    custOrderFilter.category ||
-    custOrderFilter.state ||
+    custOrderFilter.state!=='active' ||
     custOrderSort!=='newest'
   );
   document.getElementById('cust-order-reset').style.display = hasControls ? 'inline-block' : 'none';
   document.getElementById('cust-order-note').textContent = hasControls
     ? `${visibleOrders.length} of ${orders.length} order${orders.length===1?'':'s'} match your selection.`
-    : `Showing all ${orders.length} order${orders.length===1?'':'s'}, most recently added first.`;
+    : `Showing ${visibleOrders.length} in-progress order${visibleOrders.length===1?'':'s'}, most recently added first.`;
   if(!visibleOrders.length){
     list.innerHTML = '';
     empty.style.display = 'block';
